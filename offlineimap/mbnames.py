@@ -234,6 +234,7 @@ class _Mbnames(object):
         itemlist = []
 
         for intermediateFile in self._iterIntermediateFiles():
+            print intermediateFile
             try:
                 with codecs.open(
                     intermediateFile, 'rt', encoding="UTF-8") as intermediateFD:
@@ -249,19 +250,31 @@ class _Mbnames(object):
                     ("intermediate mbnames file %s not properly read"%
                         intermediateFile)
                 )
-
         itemlist.sort(key=self._func_sortkey)
+        # print itemlist
         itemlist = [self._peritem % d for d in itemlist]
 
         if self._dryrun:
             self.ui.info("mbnames would write %s"% self._path)
         else:
             try:
-                with codecs.open(
-                    self._path, 'wt', encoding='UTF-8') as mbnamesFile:
-                    mbnamesFile.write(self._header)
-                    mbnamesFile.write(self._sep.join(itemlist))
-                    mbnamesFile.write(self._footer)
+                # print itemlist
+                d = {}
+                for i in itemlist:
+                    acct_name = i.replace("\"", "").replace("+", "").split("/")[0]
+                    if acct_name in d:
+                        d[acct_name]["data"].append(i)
+                    else:
+                        d[acct_name] = {
+                            "data": []
+                        }
+                for i in d:
+                    print d[i]
+                    with codecs.open(
+                        self._path + '.' + i, 'wt', encoding='UTF-8') as mbnamesFile:
+                        mbnamesFile.write(self._header)
+                        mbnamesFile.write(self._sep.join(d[i]["data"]))
+                        mbnamesFile.write(self._footer)
             except (OSError, IOError) as e:
                 self.ui.error(
                     e,
